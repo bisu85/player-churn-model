@@ -1657,6 +1657,8 @@ name = "player-churn-model"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "fastapi" },
+    { name = "joblib" },
     { name = "mlflow" },
     { name = "pandas" },
     { name = "psycopg", extra = ["binary"] },
@@ -1664,6 +1666,7 @@ dependencies = [
     { name = "python-dotenv" },
     { name = "scikit-learn" },
     { name = "sqlalchemy" },
+    { name = "uvicorn" },
 ]
 
 [package.dev-dependencies]
@@ -1677,6 +1680,8 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "fastapi", specifier = ">=0.139.0" },
+    { name = "joblib", specifier = ">=1.5.3" },
     { name = "mlflow", specifier = ">=3.14.0" },
     { name = "pandas", specifier = ">=2.3.3" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.3.4" },
@@ -1684,6 +1689,7 @@ requires-dist = [
     { name = "python-dotenv", specifier = ">=1.2.2" },
     { name = "scikit-learn", specifier = ">=1.9.0" },
     { name = "sqlalchemy", specifier = ">=2.0.51" },
+    { name = "uvicorn", specifier = ">=0.51.0" },
 ]
 
 [package.metadata.requires-dev]
