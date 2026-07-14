@@ -1,0 +1,10 @@
+.venv
+__pycache__
+*.pyc
+.git
+.env
+mlruns
+.pytest_cache
+*.md
+!README.md
+docs
