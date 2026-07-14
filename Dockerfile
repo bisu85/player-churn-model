@@ -1,24 +1,40 @@
-# Start from a slim Python image matching your local version
-FROM python:3.13-slim
+# ---------- Stage 1: builder ----------
+FROM python:3.13-slim AS builder
 
-# Bring in the uv binary from its official image (fast, no pip install needed)
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 WORKDIR /app
 
-# 1) Install dependencies only — this layer is cached unless deps change
-COPY pyproject.toml uv.lock ./
+# uv settings that shrink and speed the build
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    UV_PYTHON_DOWNLOADS=0
+
+# Install dependencies only (cached unless deps change)
+COPY pyproject.toml uv.lock README.md ./
 RUN uv sync --frozen --no-install-project --no-dev
 
-# 2) Copy the app code + trained model, then install the project itself
+# Copy source + model, install the project itself
 COPY . .
 RUN uv sync --frozen --no-dev
 
-# Put the virtualenv on PATH so we can call uvicorn directly
+# ---------- Stage 2: final runtime ----------
+FROM python:3.13-slim AS runtime
+
+# Create the user FIRST, before copying anything
+RUN useradd --create-home appuser
+
+WORKDIR /app
+
+# Copy with ownership set during the copy — no duplicate layer, no chown -R
+COPY --from=builder --chown=appuser:appuser /app/.venv /app/.venv
+COPY --from=builder --chown=appuser:appuser /app/src /app/src
+COPY --from=builder --chown=appuser:appuser /app/models /app/models
+COPY --from=builder --chown=appuser:appuser /app/pyproject.toml /app/README.md /app/
+
+USER appuser
+
 ENV PATH="/app/.venv/bin:$PATH"
 
-# Document the port the app listens on
 EXPOSE 8000
-
-# The command that runs when the container starts
 CMD ["uvicorn", "player_churn_model.api:app", "--host", "0.0.0.0", "--port", "8000"]
