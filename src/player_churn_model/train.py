@@ -7,6 +7,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 from player_churn_model.features import build_features
+from player_churn_model.monitoring.reference import save_reference
 
 MODEL_PATH = Path("models/churn_model.joblib")
 
@@ -38,6 +39,9 @@ def main() -> None:
     MODEL_PATH.parent.mkdir(parents=True, exist_ok=True)
     joblib.dump(pipeline, MODEL_PATH)
     print(f"Saved model to {MODEL_PATH.resolve()}")
+
+    ref_path = save_reference(X)                    # ← add: freeze reference next to model
+    print(f"Saved drift reference to {ref_path}")   # ← add
 
 
 if __name__ == "__main__":
