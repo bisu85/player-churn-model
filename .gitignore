@@ -12,3 +12,6 @@ wheels/
 
 mlruns/
 models/
+reports/
+data/samples/
+data/predictions/
