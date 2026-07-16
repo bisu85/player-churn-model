@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field
 import joblib
 import pandas as pd
 from pathlib import Path
+from player_churn_model.monitoring.predict_log import log_prediction
 
 app = FastAPI(title="Player Churn API")
 
@@ -23,12 +24,18 @@ model = joblib.load(MODEL_PATH)
 @app.post("/predict")
 def predict(features: PlayerFeatures):
     """Predict churn for a single player."""
-    # Turn the validated request into the one-row DataFrame the pipeline expects.
     row = pd.DataFrame([features.model_dump()])
     proba = float(model.predict_proba(row)[:, 1][0])
+    will_churn = proba >= 0.5
+
+    try:
+        log_prediction(features=features.model_dump(), prediction=will_churn, proba=proba)
+    except Exception:
+        pass   # never let monitoring take down the prediction path
+
     return {
         "churn_probability": round(proba, 4),
-        "will_churn": proba >= 0.5,
+        "will_churn": will_churn,
     }
 
 @app.get("/")
