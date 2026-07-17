@@ -15,3 +15,6 @@ models/
 reports/
 data/samples/
 data/predictions/
+
+ops/grafana_data/
+ops/prometheus_data/

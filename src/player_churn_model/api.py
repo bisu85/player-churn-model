@@ -4,6 +4,9 @@ import joblib
 import pandas as pd
 from pathlib import Path
 from player_churn_model.monitoring.predict_log import log_prediction
+from prometheus_fastapi_instrumentator import Instrumentator
+from prometheus_client import Histogram
+
 
 app = FastAPI(title="Player Churn API")
 
@@ -26,6 +29,7 @@ def predict(features: PlayerFeatures):
     """Predict churn for a single player."""
     row = pd.DataFrame([features.model_dump()])
     proba = float(model.predict_proba(row)[:, 1][0])
+    CHURN_PROBA.observe(proba)
     will_churn = proba >= 0.5
 
     try:
@@ -42,3 +46,13 @@ def predict(features: PlayerFeatures):
 def health():
     """A simple health check — confirms the server is alive."""
     return {"status": "ok", "service": "player-churn"}
+
+# custom ML metric: the distribution of churn scores we serve
+CHURN_PROBA = Histogram(
+    "churn_probability",
+    "Distribution of predicted churn probabilities",
+    buckets=[0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+)
+
+# expose /metrics — place at the bottom of the file, after routes exist
+Instrumentator().instrument(app).expose(app)
