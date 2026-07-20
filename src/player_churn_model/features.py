@@ -27,7 +27,7 @@ SELECT
     d.max_level_day1,
     dp.player_segment,
     CASE
-        WHEN pf.last_ts < (SELECT MAX(event_ts) FROM public.fct_events) - INTERVAL '14 days'
+        WHEN pf.last_ts < DATE '2026-07-05' - INTERVAL '14 days'
         THEN 1 ELSE 0
     END AS churned
 FROM day1 d
