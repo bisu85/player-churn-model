@@ -10,6 +10,7 @@ requires-python = ">=3.13"
 dependencies = [
     "evidently>=0.7.21",
     "fastapi>=0.139.0",
+    "feast[postgres]>=0.41.3",
     "joblib>=1.5.3",
     "mlflow>=3.14.0",
     "pandas>=2.3.3",
