@@ -18,3 +18,5 @@ data/predictions/
 
 ops/grafana_data/
 ops/prometheus_data/
+feature_repo/feature_store.yaml
+feature_repo/data/

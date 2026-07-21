@@ -6,9 +6,21 @@ from pathlib import Path
 from player_churn_model.monitoring.predict_log import log_prediction
 from prometheus_fastapi_instrumentator import Instrumentator
 from prometheus_client import Histogram
-
+from feast import FeatureStore
 
 app = FastAPI(title="Player Churn API")
+
+# Load the Feast store once at startup, like the model — not per request
+FEAST_REPO = Path(__file__).resolve().parents[2] / "feature_repo"
+fs = FeatureStore(repo_path=str(FEAST_REPO))
+
+FEAST_FEATURES = [
+    "player_day1_features:events_day1",
+    "player_day1_features:purchases_day1",
+    "player_day1_features:levels_day1",
+    "player_day1_features:max_level_day1",
+    "player_day1_features:player_segment",
+]
 
 
 class PlayerFeatures(BaseModel):
@@ -40,6 +52,43 @@ def predict(features: PlayerFeatures):
     return {
         "churn_probability": round(proba, 4),
         "will_churn": will_churn,
+    }
+
+@app.post("/predict_by_id")
+def predict_by_id(player_id: int):
+    """Fetch features from Feast by player_id, then predict — no client-supplied features."""
+    feast_row = fs.get_online_features(
+        features=FEAST_FEATURES,
+        entity_rows=[{"player_id": player_id}],
+    ).to_dict()
+
+    # Feast returns lists (one per entity); unwrap to a single-row DataFrame
+    row = pd.DataFrame([{
+        "events_day1": feast_row["events_day1"][0],
+        "purchases_day1": feast_row["purchases_day1"][0],
+        "levels_day1": feast_row["levels_day1"][0],
+        "max_level_day1": feast_row["max_level_day1"][0],
+        "player_segment": feast_row["player_segment"][0],
+    }])
+
+    # Guard: unknown player_id → Feast returns None for features
+    if row["events_day1"].iloc[0] is None:
+        return {"error": f"No features found for player_id {player_id}"}
+
+    proba = float(model.predict_proba(row)[:, 1][0])
+    will_churn = proba >= 0.5
+
+    CHURN_PROBA.observe(proba)          # same metric as /predict
+    try:
+        log_prediction(features=row.iloc[0].to_dict(), prediction=will_churn, proba=proba)
+    except Exception:
+        pass
+
+    return {
+        "player_id": player_id,
+        "churn_probability": round(proba, 4),
+        "will_churn": will_churn,
+        "source": "feast_online_store",
     }
 
 @app.get("/")
