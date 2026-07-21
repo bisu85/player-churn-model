@@ -6,15 +6,28 @@ on:
   pull_request:
     branches: [master]
 
+# Cancel an in-flight run when a newer commit lands on the same branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Least privilege: the token can only read the repo
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15          # kill a hung job instead of burning minutes
     steps:
       - name: Check out code
         uses: actions/checkout@v4
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v6      # pinned; v6 has built-in caching
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
 
       - name: Set up Python
         run: uv python install 3.13
@@ -22,8 +35,8 @@ jobs:
       - name: Install dependencies
         run: uv sync --frozen
 
-      - name: Lint with ruff
+      - name: Lint with ruff          # fast check first — fails in seconds
         run: uv run ruff check .
 
-      - name: Run tests
+      - name: Run tests               # slower check second
         run: uv run pytest -v
