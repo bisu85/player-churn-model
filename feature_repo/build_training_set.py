@@ -1,4 +1,3 @@
-import pandas as pd
 from feast import FeatureStore
 from player_churn_model.db import load_features
 

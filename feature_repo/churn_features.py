@@ -1,5 +1,5 @@
 from datetime import timedelta
-from feast import Entity, FeatureView, Field, PushSource
+from feast import Entity, FeatureView, Field
 from feast.infra.offline_stores.contrib.postgres_offline_store.postgres_source import (
     PostgreSQLSource,
 )
