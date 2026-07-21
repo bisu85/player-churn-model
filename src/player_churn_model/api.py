@@ -7,12 +7,13 @@ from player_churn_model.monitoring.predict_log import log_prediction
 from prometheus_fastapi_instrumentator import Instrumentator
 from prometheus_client import Histogram
 from feast import FeatureStore
+from functools import lru_cache
 
 app = FastAPI(title="Player Churn API")
 
 # Load the Feast store once at startup, like the model — not per request
 FEAST_REPO = Path(__file__).resolve().parents[2] / "feature_repo"
-fs = FeatureStore(repo_path=str(FEAST_REPO))
+# fs = FeatureStore(repo_path=str(FEAST_REPO))
 
 FEAST_FEATURES = [
     "player_day1_features:events_day1",
@@ -34,6 +35,15 @@ class PlayerFeatures(BaseModel):
 # Load the model ONCE, when the app starts — not on every request.
 MODEL_PATH = Path("models/churn_model.joblib")
 model = joblib.load(MODEL_PATH)
+
+@lru_cache(maxsize=1)
+def get_feast_store() -> FeatureStore:
+    """Build the Feast store on first use, not at import.
+
+    Keeps importing api.py free of a DB/config dependency (so CI can import it),
+    and still loads the store only once thanks to the cache.
+    """
+    return FeatureStore(repo_path=str(FEAST_REPO))
 
 
 @app.post("/predict")
@@ -57,6 +67,7 @@ def predict(features: PlayerFeatures):
 @app.post("/predict_by_id")
 def predict_by_id(player_id: int):
     """Fetch features from Feast by player_id, then predict — no client-supplied features."""
+    fs = get_feast_store()          # ← built on first request, cached after
     feast_row = fs.get_online_features(
         features=FEAST_FEATURES,
         entity_rows=[{"player_id": player_id}],
