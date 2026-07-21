@@ -19,7 +19,7 @@ def retrain_challenger() -> None:
     # 2. Refit on ALL data for the shipped artifact (honest score + max-trained model)
     X, y = build_features()
     mlflow.set_experiment("player-churn-registry")
-    with mlflow.start_run(run_name="challenger-retrain") as run:
+    with mlflow.start_run(run_name="challenger-retrain") :
         pipeline = build_pipeline()
         pipeline.fit(X, y)
         mlflow.log_metric("roc_auc", auc)          # the held-out score, not a full-data score

@@ -1,5 +1,6 @@
 from feast import FeatureStore
 from player_churn_model.db import load_features
+from player_churn_model.features import build_features
 
 # 1. Entity dataframe: which players, and AT WHAT TIME we want their features.
 #    The timestamp is what makes the join point-in-time correct.
@@ -28,7 +29,6 @@ print("Feast training set shape:", training_df.shape)
 print(training_df.head())
 
 # 3. Parity check against the direct SQL path (features.py)
-from player_churn_model.features import build_features
 X_direct, _ = build_features()
 print("\nDirect features.py shape:", X_direct.shape)
 print("Row counts match:", len(training_df) == len(X_direct))
