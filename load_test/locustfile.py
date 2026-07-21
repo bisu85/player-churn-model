@@ -4,6 +4,7 @@ from locust import HttpUser, task, between
 
 class ChurnUser(HttpUser):
     wait_time = between(0.1, 0.5)   # each simulated user pauses briefly between requests
+    
 
     @task
     def predict(self):
