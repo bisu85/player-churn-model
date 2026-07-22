@@ -108,6 +108,12 @@ def health():
     """A simple health check — confirms the server is alive."""
     return {"status": "ok", "service": "player-churn"}
 
+
+@app.get("/")
+def root_health():
+    """Root health check for clients and tests that hit the API base URL."""
+    return health()
+
 @app.get("/ready")
 def ready():
     """Readiness — is the model loaded and are we able to serve?"""
