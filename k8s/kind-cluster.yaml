@@ -1,0 +1,10 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: ml-dev
+nodes:
+- role: control-plane
+  extraPortMappings:
+  - containerPort: 30080   # must equal the Service's nodePort
+    hostPort: 30080
+    listenAddress: "0.0.0.0"
+    protocol: TCP

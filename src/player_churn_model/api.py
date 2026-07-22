@@ -102,10 +102,17 @@ def predict_by_id(player_id: int):
         "source": "feast_online_store",
     }
 
-@app.get("/")
+@app.get("/health")
 def health():
     """A simple health check — confirms the server is alive."""
     return {"status": "ok", "service": "player-churn"}
+
+@app.get("/ready")
+def ready():
+    """Readiness — is the model loaded and are we able to serve?"""
+    if model is None:
+        return JSONResponse(status_code=503, content={"status": "not ready"})
+    return {"status": "ready"}
 
 # custom ML metric: the distribution of churn scores we serve
 CHURN_PROBA = Histogram(
