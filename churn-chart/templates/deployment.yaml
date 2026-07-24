@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-churn-api
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-churn-api
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-churn-api
+    spec:
+      containers:
+      - name: churn-api
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.service.targetPort }}
+        readinessProbe:
+          httpGet: { path: /ready, port: {{ .Values.service.targetPort }} }
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet: { path: /health, port: {{ .Values.service.targetPort }} }
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        resources:
+{{ toYaml .Values.resources | indent 10 }}
