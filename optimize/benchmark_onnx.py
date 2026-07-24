@@ -2,11 +2,11 @@
 # requires-python = ">=3.11"
 # dependencies = ["onnxruntime", "scikit-learn", "joblib", "numpy", "pandas"]
 # ///
-import time, joblib
+import time
+import joblib
 import numpy as np
 import pandas as pd
 import onnxruntime as rt
-from pathlib import Path
 
 pipeline = joblib.load("models/churn_model.joblib")
 sess = rt.InferenceSession("models/churn_model.onnx", providers=["CPUExecutionProvider"])
@@ -23,14 +23,17 @@ onnx_in = {
 
 N = 5000
 # warm up both (first call pays one-time init costs)
-pipeline.predict_proba(row); sess.run(None, onnx_in)
+pipeline.predict_proba(row) 
+sess.run(None, onnx_in)
 
 t = time.perf_counter()
-for _ in range(N): pipeline.predict_proba(row)
+for _ in range(N): 
+    pipeline.predict_proba(row)
 sk_ms = (time.perf_counter() - t) / N * 1000
 
 t = time.perf_counter()
-for _ in range(N): sess.run(None, onnx_in)
+for _ in range(N): 
+    sess.run(None, onnx_in)
 onnx_ms = (time.perf_counter() - t) / N * 1000
 
 print(f"sklearn: {sk_ms:.3f} ms/prediction")
